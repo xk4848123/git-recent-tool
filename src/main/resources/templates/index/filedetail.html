@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <meta charset="UTF-8"/>
+    <title>gitcloud</title>
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <style>
+        .clear{ clear:both}
+    </style>
+</head>
+<body>
+<h1 id ="h" th:inlines="text">您目前在<span></span>仓库下</h1>
+
+<div id = "file" style="margin-bottom:30px;">
+    <div id="header" style="color: red;">当前仓库下有<span></span>个文件</div>
+        <div style='margin:10px 5px;'>
+            <div style="float: left;margin-right: 25px;">1.txt</div>
+            <div style="float: left">最近修改时间</div>
+            <div class="clear"></div>
+        </div>
+
+    </div>
+   <div id="log">
+       <div id="logheader" style="color: red;">仓库提交历史</div>
+
+   </div>
+
+
+    <body>
+
+    <script type="text/javascript">
+        var commitIDs = new Array();
+        $(function () {
+            var url = window.location.href;
+            var index = url.lastIndexOf("\/");
+            var str = url.substring(index + 1,url.length);
+            $("#h span").html(str);
+            $.ajax({
+                url: 'files/' + str,//地址
+                dataType: 'json',//数据类型
+                type: 'GET',//类型
+                timeout: 2000,//超时
+                //请求成功
+                success: function (res) {
+                    var div = $("#file");
+                    var num = 0;
+                    for (var i=0;i<res.length;i++)
+                    {
+                        num ++;
+                        div.append("<div style='margin:10px 5px;'><div style='float: left;margin-right: 25px;'>" + res[i].fileName +
+                            "</div><div style='float: left'>最近修改时间:" + res[i].modifiedTime + " 大小:("+ res[i].size +")" + "</div><div class=\"clear\"></div>");
+                    }
+                    $("#header span").html(num);
+
+                },
+                //失败/超时
+                error: function (msg) {
+                    alert(msg);
+                }
+            });
+            getCommitLog(str);
+            $("#log").click(function(e){
+                console.log(e);
+                var content = e.target.innerHTML;
+                var strs= new Array();
+                strs = content.split(":");
+                if(strs[0] == 'CommitID'){
+                    if(e.target.style.color == ''){
+                        if(commitIDs.length < 2){
+                            e.target.style.color='red';
+                            commitIDs.push(strs[1]);
+                        }else{
+                            var oldCommitIDs = new Array();
+                            for(i=0;i<commitIDs.length;i++){
+                                oldCommitIDs.push(commitIDs[i]);
+                            }
+                            commitIDs.pop();
+                            var newCommitIDs = new Array();
+                            for(i=0;i<commitIDs.length;i++){
+                                newCommitIDs.push(commitIDs[i]);
+                            }
+                            var result = oldCommitIDs.concat(newCommitIDs ).filter(function (v) {
+                                return oldCommitIDs.indexOf(v)===-1 || newCommitIDs .indexOf(v)===-1
+                            });
+                            $("#"+ result[0])[0].style.color = '';
+                            e.target.style.color='red';
+                            commitIDs.push(strs[1]);
+                        }
+                    }else{
+                        e.target.style.color='';
+                        var tempCommitID = new Array();
+                        tempCommitID.push(strs[1]);
+                        var result = commitIDs.concat(tempCommitID ).filter(function (v) {
+                            return commitIDs.indexOf(v)===-1 || tempCommitID .indexOf(v)===-1
+                        });
+                        commitIDs = result;
+                    }
+                }
+                console.log(commitIDs);
+                var curLength = commitIDs.length;
+
+
+            });
+
+        });
+
+
+
+
+        function getCommitLog(str) {
+            $.ajax({
+                url: 'commit/commits?directory?=' + str,//地址
+                dataType: 'json',//数据类型
+                type: 'GET',//类型
+                timeout: 2000,//超时
+                //请求成功
+                success: function (res) {
+                    var div = $("#log");
+                    for (var i=0;i<res.length;i++)
+                    {
+                        div.append( "<div style='margin:10px 5px;'>" +
+                        "<div id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
+                    "<div>time:" + res[i].time + "</div></div>");
+                    }
+
+                },
+                //失败/超时
+                error: function (msg) {
+                    alert(msg);
+                }
+            });
+        }
+    </script>
+
+</html>

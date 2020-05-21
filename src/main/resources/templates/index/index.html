@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<head>
+    <meta charset="UTF-8"/>
+    <title>gitcloud</title>
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+<h1 th:inlines="text">您的git云仓库</h1>
+
+<div id = "directory">
+<div id="header" style="color: red">您有<span></span>个云仓库</divid>
+
+</div>
+
+<body>
+
+<script type="text/javascript">
+    $(function () {
+
+        $.ajax({
+            url: 'files/showall',//地址
+            dataType: 'json',//数据类型
+            type: 'GET',//类型
+            timeout: 2000,//超时
+            //请求成功
+            success: function (res) {
+                var directory = $("#directory");
+                var num = 0;
+                for (var i=0;i<res.length;i++)
+                {
+                    num ++;
+                    directory.append("<div style='margin:10px 5px';>" + "<a href='http://www.w3school.com.cn'>" + res[i] + "</a>"+ "</div>");
+                    // html.push("<div>" + res[i] + "</div>");
+                }
+                $("#header span").html(num);
+
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
+
+    });
+</script>
+
+</html>
