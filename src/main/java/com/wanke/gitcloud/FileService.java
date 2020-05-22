@@ -36,8 +36,19 @@ public class FileService {
     }
 
 
-    public List<Map<String,String>> showFileDetails(String directory) {
-        File dir = new File(rootDirectory + File.separator + directory);
+    public List<Map<String,String>> showFileDetails(String directory,String folders) {
+        String basePath =rootDirectory + File.separator + directory;
+        String path = "";
+        if (folders == null || "".equals(folders)){
+           path = basePath;
+        }else {
+            path = basePath;
+            String[] folderArray = folders.split("\\*");
+            for(String folder : folderArray){
+                path = path + File.separator + folder;
+            }
+        }
+        File dir = new File(path);
         List<Map<String,String>> filesList = new ArrayList<>();
         if (!dir.exists() || !dir.isDirectory()) {// 判断是否存在目录
             return filesList;
@@ -45,10 +56,15 @@ public class FileService {
         String[] files = dir.list();
         for (int i = 0; i < files.length; i++) {
             File file = new File(dir, files[i]);
-            if (file.isDirectory()){
+            if(file.getName().equals(".git")){
                 continue;
             }
+            String fileType = "file";
+            if (file.isDirectory()){
+                fileType = "directory";
+            }
             HashMap<String,String> map = new HashMap<>();
+            map.put("type",fileType);
             map.put("fileName",file.getName());
             map.put("size",String.valueOf(file.length()) + "B");
             DateTimeFormatter df = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");
@@ -57,4 +73,78 @@ public class FileService {
         }
         return  filesList;
     }
+
+
+    public boolean createFolder(String directory,String folders,String newfolder) {
+        if (newfolder.contains("*")){
+            return  false;
+        }
+        String basePath =rootDirectory + File.separator + directory;
+        String path = "";
+        if (folders == null || "".equals(folders)){
+            path = basePath;
+        }else {
+            path = basePath;
+            String[] folderArray = folders.split("\\*");
+            for(String folder : folderArray){
+                path = path + File.separator + folder;
+            }
+        }
+        File dir = new File(path + File.separator + newfolder);
+        if (!dir.exists()){
+            return dir.mkdir();
+        }
+
+        return true;
+    }
+
+    /**
+     * 获取物理路径
+     */
+
+    public String getPath(String directory,String folders,String fileName,String spliFlag){
+        String basePath = rootDirectory + spliFlag + directory;
+        String path = "";
+        if (folders == null || "".equals(folders)){
+            path = basePath;
+        }else {
+            path = basePath;
+            String[] folderArray = folders.split("\\*");
+            for(String folder : folderArray){
+                path = path + spliFlag + folder;
+            }
+        }
+        if (fileName != null){
+            return path + spliFlag + fileName;
+        }
+        return path;
+
+    }
+
+
+    /**
+     * 获取仓库下相对路径
+     */
+
+    public String getPath(String folders,String fileName,String spliFlag){
+        String path = "";
+        if (folders == null || "".equals(folders)){
+            path = fileName;
+        }else {
+            String[] folderArray = folders.split("\\*");
+            for(String folder : folderArray){
+                if ("".equals(path)){
+                    path = folder;
+                }else {
+                    path = path + spliFlag + folder;
+                }
+
+            }
+            path =path + spliFlag + fileName;
+        }
+
+        return path;
+
+    }
+
 }

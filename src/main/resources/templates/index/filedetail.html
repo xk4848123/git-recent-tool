@@ -6,123 +6,185 @@
     <title>gitcloud</title>
     <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
     <style>
-        .clear{ clear:both}
+        .clear {
+            clear: both
+        }
     </style>
 </head>
 <body>
-<h1 id ="h" th:inlines="text">您目前在<span></span>仓库下</h1>
+<h1 id="h" th:inlines="text">您目前在<span></span>仓库下</h1>
 
-<div id = "file" style="margin-bottom:30px;">
-    <div id="header" style="color: red;">当前仓库下有<span></span>个文件</div>
-        <div style='margin:10px 5px;'>
-            <div style="float: left;margin-right: 25px;">1.txt</div>
-            <div style="float: left">最近修改时间</div>
-            <div class="clear"></div>
-        </div>
+<div style="margin-bottom:30px;">
+    <div id="header" style="color: red;">当前目录下有<span></span>个文件</div>
+    <div id="file"></div>
 
+</div>
+<button onclick="createFolder()">创建文件夹</button>
+<form action="newfile/multifileUpload" method="post" enctype="multipart/form-data" onsubmit="return check();">
+    <input id="hiddenDirectory" type="hidden" name="directory"/>
+    <input id="hiddenFolders" type="hidden" name="folders"/>
+    <div id="uploadfile">
+    <p>选择文件: <input type="file" name="fileName"/></p>
+        <p>选择文件: <input type="file" name="fileName"/></p>
     </div>
-   <div id="log">
-       <div id="logheader" style="color: red;">仓库提交历史</div>
+    <div>
+    <div style="float: left;margin-right: 25px;"><input type="submit" value="上传"/></div>
+        <div style="float: left;margin-right: 25px;" onclick="add()"><img height='20' width='20' src="img/add.jpg"></div>
+        <div style="float: left;" onclick="sub()"><img height='20' width='20' src="img/sub.jpg"></div>
+    <div class='clear'></div>
+    </div>
+</form>
+<div id="log">
+    <div id="logheader" style="color: red;">仓库提交历史</div>
 
-   </div>
+</div>
+<div style="margin:20px 0;" id="diff">
 
 
-    <body>
+</div>
 
-    <script type="text/javascript">
-        var commitIDs = new Array();
-        $(function () {
-            var url = window.location.href;
-            var index = url.lastIndexOf("\/");
-            var str = url.substring(index + 1,url.length);
-            $("#h span").html(str);
-            $.ajax({
-                url: 'files/' + str,//地址
-                dataType: 'json',//数据类型
-                type: 'GET',//类型
-                timeout: 2000,//超时
-                //请求成功
-                success: function (res) {
-                    var div = $("#file");
-                    var num = 0;
-                    for (var i=0;i<res.length;i++)
-                    {
-                        num ++;
-                        div.append("<div style='margin:10px 5px;'><div style='float: left;margin-right: 25px;'>" + res[i].fileName +
-                            "</div><div style='float: left'>最近修改时间:" + res[i].modifiedTime + " 大小:("+ res[i].size +")" + "</div><div class=\"clear\"></div>");
-                    }
-                    $("#header span").html(num);
+</body>
 
-                },
-                //失败/超时
-                error: function (msg) {
-                    alert(msg);
-                }
-            });
-            getCommitLog(str);
-            $("#log").click(function(e){
-                console.log(e);
-                var content = e.target.innerHTML;
-                var strs= new Array();
-                strs = content.split(":");
-                if(strs[0] == 'CommitID'){
-                    if(e.target.style.color == ''){
-                        if(commitIDs.length < 2){
-                            e.target.style.color='red';
-                            commitIDs.push(strs[1]);
-                        }else{
-                            var oldCommitIDs = new Array();
-                            for(i=0;i<commitIDs.length;i++){
-                                oldCommitIDs.push(commitIDs[i]);
-                            }
-                            commitIDs.pop();
-                            var newCommitIDs = new Array();
-                            for(i=0;i<commitIDs.length;i++){
-                                newCommitIDs.push(commitIDs[i]);
-                            }
-                            var result = oldCommitIDs.concat(newCommitIDs ).filter(function (v) {
-                                return oldCommitIDs.indexOf(v)===-1 || newCommitIDs .indexOf(v)===-1
-                            });
-                            $("#"+ result[0])[0].style.color = '';
-                            e.target.style.color='red';
-                            commitIDs.push(strs[1]);
+<script type="text/javascript">
+    var commitIDs;
+    var str;
+    var finalQueryParam;
+    $(function () {
+        init();
+    });
+
+    function init() {
+        commitIDs = new Array();
+        var url = window.location.href;
+        var index = url.lastIndexOf("\/");
+        str = url.substring(index + 1, url.length);
+        str = str.split("?")[0];
+        $("#hiddenDirectory").val(str);
+        var param = decodeURI(getUrlParameter('folders'));
+        if (param == null || param == '') {
+            finalQueryParam = '';
+        } else {
+            finalQueryParam = param;
+        }
+        $("#hiddenFolders").val(finalQueryParam);
+        $("#h span").html(str);
+        $.ajax({
+            url: 'files/' + str + '?folders=' + finalQueryParam,//地址
+            dataType: 'json',//数据类型
+            type: 'GET',//类型
+            timeout: 2000,//超时
+            //请求成功
+            success: function (res) {
+                var div = $("#file");
+                var num = 0;
+                var img;
+                var filepart;
+                var curParam;
+                for (var i = 0; i < res.length; i++) {
+                    if (res[i].type == 'file') {
+                        num++;
+                        filepart = "<a style = 'text-decoration: underline ; color :blue;' href ='" + str + "/singlefile?folders=" + finalQueryParam + "&filename=" + res[i].fileName + "'>" + res[i].fileName + "</a>";
+                        img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
+                    } else {
+
+                        if (finalQueryParam == '') {
+                            curParam = res[i].fileName;
+                        } else {
+                            curParam = finalQueryParam + '*' + res[i].fileName;
                         }
-                    }else{
-                        e.target.style.color='';
-                        var tempCommitID = new Array();
-                        tempCommitID.push(strs[1]);
-                        var result = commitIDs.concat(tempCommitID ).filter(function (v) {
-                            return commitIDs.indexOf(v)===-1 || tempCommitID .indexOf(v)===-1
-                        });
-                        commitIDs = result;
+                        filepart = "<a style = 'text-decoration: underline ; color :yellowgreen;' href ='" + str + "?folders=" + curParam + "'>" + res[i].fileName + "</a>";
+                        img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/directory.jpg'>";
                     }
+
+                    div.append(img + "<div style='float: left;margin-right: 25px;'>" + filepart +
+                        "</div><div style='float: left'>最近修改时间:" + res[i].modifiedTime + " 大小:(" + res[i].size + ")" + "</div><div class='clear'></div>");
                 }
-                console.log(commitIDs);
-                var curLength = commitIDs.length;
+                $("#header span").html(num);
 
-
-            });
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
+        getCommitLog(str);
+        $("#log").click(function (e) {
+            console.log(e);
+            var content = e.target.innerHTML;
+            var strs = new Array();
+            strs = content.split(":");
+            if (strs[0] == 'CommitID') {
+                if (e.target.style.color == 'blue') {
+                    if (commitIDs.length < 2) {
+                        e.target.style.color = 'red';
+                        commitIDs.push(strs[1]);
+                    } else {
+                        var oldCommitIDs = new Array();
+                        for (i = 0; i < commitIDs.length; i++) {
+                            oldCommitIDs.push(commitIDs[i]);
+                        }
+                        commitIDs.pop();
+                        var newCommitIDs = new Array();
+                        for (i = 0; i < commitIDs.length; i++) {
+                            newCommitIDs.push(commitIDs[i]);
+                        }
+                        var result = oldCommitIDs.concat(newCommitIDs).filter(function (v) {
+                            return oldCommitIDs.indexOf(v) === -1 || newCommitIDs.indexOf(v) === -1
+                        });
+                        $("#" + result[0])[0].style.color = 'blue';
+                        e.target.style.color = 'red';
+                        commitIDs.push(strs[1]);
+                    }
+                } else {
+                    e.target.style.color = 'blue';
+                    var tempCommitID = new Array();
+                    tempCommitID.push(strs[1]);
+                    var result = commitIDs.concat(tempCommitID).filter(function (v) {
+                        return commitIDs.indexOf(v) === -1 || tempCommitID.indexOf(v) === -1
+                    });
+                    commitIDs = result;
+                }
+            }
+            var curLength = commitIDs.length;
+            if (curLength == 0) {
+                $("#diff").html('');
+            }
+            if (curLength == 1) {
+                getDiff(1, str, commitIDs);
+            }
+            if (curLength == 2) {
+                getDiff(2, str, commitIDs);
+            }
 
         });
+    }
 
+    function getUrlParameter(name) {
+        name = name.replace(/[]/, "\[").replace(/[]/, "\[").replace(/[]/, "\\\]");
+        var regexS = "[\\?&]" + name + "=([^&#]*)";
+        var regex = new RegExp(regexS);
+        var results = regex.exec(window.parent.location.href);
+        if (results == null)
+            return "";
+        else {
+            return results[1];
+        }
+    };
 
-
-
-        function getCommitLog(str) {
+    function createFolder() {
+        var name = prompt("请输入文件名", "default")
+        if (name != null && name != "") {
             $.ajax({
-                url: 'commit/commits?directory?=' + str,//地址
-                dataType: 'json',//数据类型
-                type: 'GET',//类型
-                timeout: 2000,//超时
+                url: 'newfile/createfolder/' + str,//地址
+                dataType: 'text',//数据类型
+                data: 'folders=' + finalQueryParam + "&foldername=" + name,
+                contentType: 'application/x-www-form-urlencoded',
+                type: 'POST',//类型
+                timeout: 5000,//超时
                 //请求成功
                 success: function (res) {
-                    var div = $("#log");
-                    for (var i=0;i<res.length;i++)
-                    {
-                        div.append( "<div style='margin:10px 5px;'>" +
-                        "<div id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
-                    "<div>time:" + res[i].time + "</div></div>");
-                    }
+                    $("#file").empty();
+                    init();
 
                 },
                 //失败/超时
@@ -131,6 +193,97 @@
                 }
             });
         }
-    </script>
+    }
+
+    function add(){
+        var length = $("#uploadfile").children('p').length;
+        if (length < 5){
+            $("#uploadfile").append("<p>选择文件: <input type='file' name='fileName'></p>");
+        }
+
+    }
+
+    function sub(){
+        var length = $("#uploadfile").children('p').length;
+        if (length > 1){
+            $("#uploadfile").children().last().remove();
+        }
+
+    }
+
+    function getDiff(type, directory, commitIDs) {
+        var param;
+        var url;
+        var resPre;
+        if (type == 1) {
+            url = 'diff/diffvshead';
+            param = '?directory=' + directory + '&commitid=' + commitIDs[0];
+            resPre = "<div style='color:red;'><div>当前版本相比于</div><div>" + commitIDs[0] + "版本</div><div>的变化如下:</div></div>";
+        } else {
+            url = 'diff/diffcustomize';
+            param = '?directory=' + directory + '&firstcommitid=' + commitIDs[0] + '&secondcommitid=' + commitIDs[1];
+            resPre = "<div style='color:red;'><div>" + commitIDs[0] + "版本相比于</div><div>" + commitIDs[1] + "版本</div><div>的变化如下:</div></div>";
+        }
+        $.ajax({
+            url: url + param,//地址
+            type: 'GET',//类型
+            timeout: 5000,//超时
+            //请求成功
+            success: function (res) {
+                $("#diff").html(resPre + "<div style='margin:10px 0 20px 0;'>" + res + "</div>");
+
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
+
+    }
+
+
+    function getCommitLog(str) {
+        $.ajax({
+            url: 'commit/commits?directory=' + str,//地址
+            dataType: 'json',//数据类型
+            type: 'GET',//类型
+            timeout: 2000,//超时
+            //请求成功
+            success: function (res) {
+                var div = $("#log");
+                for (var i = 0; i < res.length; i++) {
+                    div.append("<div style='margin:10px 5px;'>" +
+                        "<div title='点击可作比对' style='text-decoration:underline;color:blue;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
+                        "<div>time:" + res[i].time + "</div></div>");
+                }
+
+            },
+            //失败/超时
+            error: function (msg) {
+            }
+        });
+    }
+    function check(){
+        var flag = false;
+        $("#uploadfile p input").each(function(){
+
+            var self=$(this);
+            var the_file = self.val();
+            if(the_file == "" || the_file.length == 0){
+
+            }else{
+                flag = true;
+            }
+        });
+        if(flag){
+            return true;
+        }else {
+            alert("请选择文件");
+            return false;
+        }
+
+
+    }
+</script>
 
 </html>

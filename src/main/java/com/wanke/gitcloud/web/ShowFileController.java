@@ -2,11 +2,9 @@ package com.wanke.gitcloud.web;
 
 import com.wanke.gitcloud.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +24,8 @@ public class ShowFileController {
 
     @RequestMapping(value = "{directory}", method = RequestMethod.GET)
     @ResponseBody
-    public List<Map<String, String>> showDirectory(@PathVariable("directory") String directory){
-        return fileService.showFileDetails(directory);
+    public List<Map<String, String>> showDirectory(@PathVariable("directory") String directory ,@RequestParam(value = "folders" ,required=false,defaultValue="") String folders){
+        return fileService.showFileDetails(directory,folders);
     }
 
 }

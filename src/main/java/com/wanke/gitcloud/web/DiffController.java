@@ -21,7 +21,7 @@ public class DiffController {
     /**
      * firstcommitid相对于该commitid
      * */
-    @RequestMapping(value = "diffvshead", method = RequestMethod.GET)
+    @RequestMapping(value = "diffvshead", method = RequestMethod.GET,produces = "text/plain;charset=UTF-8")
     @ResponseBody
     public String diffVshead(@RequestParam(value = "directory", required = false, defaultValue = "default") String directory,
                                                @RequestParam(value = "commitid") String commitId) {
@@ -31,7 +31,7 @@ public class DiffController {
     /**
      * firstcommitid相对于secondcommitid
      * */
-    @RequestMapping(value = "diffcustomize", method = RequestMethod.GET)
+    @RequestMapping(value = "diffcustomize", method = RequestMethod.GET,produces = "text/plain;charset=UTF-8")
     @ResponseBody
     public String diffCustomize(@RequestParam(value = "directory", required = false, defaultValue = "default") String directory,
                             @RequestParam(value = "firstcommitid") String fCommitId,@RequestParam(value = "secondcommitid") String sCommitId) {
