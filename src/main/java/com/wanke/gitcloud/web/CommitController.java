@@ -24,8 +24,13 @@ public class CommitController {
 
     @RequestMapping(value = "commits" ,method= RequestMethod.GET)
     @ResponseBody
-    public List<Map<String, String>> commitLog(@RequestParam(value = "directory",required=false,defaultValue="default") String directory){
-        return cmd.getCommitLog(directory);
+    public List<Map<String, String>> commitLog(@RequestParam(value = "directory",required=false,defaultValue="default") String directory,
+                                               @RequestParam(value = "pagenum",required=false,defaultValue= "5") String pageNum,
+                                               @RequestParam(value = "page",required=false,defaultValue= "1") String page
+                                               ){
+        Integer intPageNum = Integer.valueOf(pageNum);
+        Integer skip = intPageNum * (Integer.valueOf(page) - 1);
+        return cmd.getCommitLog(directory,intPageNum,skip);
     }
 
     @RequestMapping(value = "historycontent" ,method= RequestMethod.GET,produces = "text/plain;charset=UTF-8")
@@ -41,8 +46,11 @@ public class CommitController {
     @ResponseBody
     public List<Map<String,String>>  fileHistoryContent(@RequestParam(value = "directory",required=false,defaultValue="default") String directory,
                                                         @RequestParam(value = "folders",required = false,defaultValue = "") String folders,
-                                                        @RequestParam(value = "filename") String fileName){
-
-        return cmd.getCommitLog(directory,fileService.getPath(folders,fileName,"/"));
+                                                        @RequestParam(value = "filename") String fileName,
+                                                        @RequestParam(value = "pagenum",required=false,defaultValue= "5") String pageNum,
+                                                        @RequestParam(value = "page",required=false,defaultValue= "1") String page){
+        Integer intPageNum = Integer.valueOf(pageNum);
+        Integer skip = intPageNum * (Integer.valueOf(page) - 1);
+        return cmd.getCommitLog(directory,fileService.getPath(folders,fileName,"/"),intPageNum,skip);
     }
 }

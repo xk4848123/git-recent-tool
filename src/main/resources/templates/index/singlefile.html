@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8"/>
     <title>gitcloud</title>
-    <script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+
     <style>
         .clear {
             clear: both
@@ -14,8 +14,11 @@
 <body>
 
 <div>
+    <div id="back" style="float: left;margin-right: 25px;">
+        <img src="/img/prefolder.jpg" height='50' width='50'>
+    </div>
     <div style="float: left;margin-right: 25px;">
-      <img src="/img/file.jpg" height='50' width='50'>
+        <img src="/img/file.jpg" height='50' width='50'>
     </div>
     <div style="float: left;height: 50px;line-height: 50px;" id="file_name"></div>
     <div class='clear'></div>
@@ -24,57 +27,90 @@
     <div id="logheader" style="color: red;margin-top: 30px;">文件提交历史</div>
 
 </div>
-
+<div id="loadmore" style='text-decoration:underline;color:red;margin: 10px 10px;'>加载更多提交历史</div>
 <div style="margin:20px 0;" id="filelogcontent">
 
 
 </div>
 </body>
-
+<script type="text/javascript" src="/js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="/js/route.js"></script>
 <script th:inline="javascript">
+    var page = 1;
+    var pageNum = 10;
+    var queryFileName;
+    var folders;
+    var director;
+    var loadmoreFn;
+    var downflag = true;
     $(function () {
         var fileName = [[${filefullname}]];
         $("#file_name").html(fileName);
-        var queryFileName = [[${filename}]];
-        var folders = [[${folders}]];
-        var directory = [[${directory}]];
-        getFileCommitLog(directory,folders,queryFileName);
+        queryFileName = [[${filename}]];
+        folders = [[${folders}]];
+        directory = [[${directory}]];
+        getFileCommitLog(directory, folders, queryFileName,page,pageNum);
         $("#file_log").click(function (e) {
             var content = e.target.innerHTML;
             var strs = new Array();
             strs = content.split(":");
             if (strs[0] == 'CommitID') {
-                getLog(directory,folders,queryFileName,strs[1]);
+                getLog(directory, folders, queryFileName, strs[1]);
+            }
+        });
+        $('#loadmore').on('click', loadmoreFn = function() {
+            getFileCommitLog(directory, folders, queryFileName,page,pageNum);
+        });
+        $('#back').on('click', function() {
+            goToFolder(directory, folders);
+        });
+    });
+
+    function getFileCommitLog(directory, folders, queryFileName,curPage,curPageNum) {
+        var param = 'directory=' + directory + "&folders=" + folders + "&filename=" + queryFileName + "&page=" + curPage + "&pagenum=" + curPageNum;
+        var downParam = 'directory=' + directory + '&folders=' + folders + '&filename=' + queryFileName + '&commitid=';
+        $.ajax({
+            url: '/commit/filecommits' + "?" + param,//地址
+            dataType: 'json',//数据类型
+            type: 'GET',//类型
+            timeout: 5000,//超时
+            //请求成功
+            success: function (res) {
+                var div = $("#file_log");
+                for (var i = 0; i < res.length; i++) {
+                    var queryCommitId;
+                    var makeUpTitle = '';
+                    if (curPage == 1 && i == 0){
+                        queryCommitId = 'head';
+                        makeUpTitle ='(HEAD)';
+                    }else {
+                        queryCommitId = res[i].commitID;
+                    }
+
+                    div.append("<div style='margin:10px 5px;'>" +
+                        "<div><div title='点击可查看该版本内容' style='text-decoration:underline;color:blue;float: left;margin-right: 25px;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
+                        "<div title='下载该版本'><a href='/newfile/downloadFile?" + downParam + queryCommitId + "'>下载该版本 " + makeUpTitle + "</a></div><div class='clear'></div></div>" +
+                        "<div>time:" + res[i].time + "</div></div>");
+                }
+                if (res.length == 0){
+                    var loadDiv = $("#loadmore");
+                    loadDiv.html("没有更多提交历史了");
+                    loadDiv.unbind("click",loadmoreFn);
+                    loadDiv.css("color","");
+                }else {
+                    page++;
+                }
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
             }
         });
 
-    });
-   function getFileCommitLog(directory,folders,queryFileName){
-       var param = 'directory='+directory + "&folders=" + folders + "&filename=" +queryFileName;
-       $.ajax({
-           url: '/commit/filecommits' + "?" + param,//地址
-           dataType: 'json',//数据类型
-           type: 'GET',//类型
-           timeout: 5000,//超时
-           //请求成功
-           success: function (res) {
-               var div = $("#file_log");
-               for (var i = 0; i < res.length; i++) {
-                   div.append("<div style='margin:10px 5px;'>" +
-                       "<div title='点击可查看该版本内容' style='text-decoration:underline;color:blue;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
-                       "<div>time:" + res[i].time + "</div></div>");
-               }
-           },
-           //失败/超时
-           error: function (msg) {
-               alert(msg);
-           }
-       });
+    }
 
-   }
-
-    function getLog(directory,folders,queryFileName,commitId){
-        var param = 'directory='+directory + "&folders=" + folders + "&filename=" +queryFileName + "&commitid=" + commitId;
+    function getLog(directory, folders, queryFileName, commitId) {
+        var param = 'directory=' + directory + "&folders=" + folders + "&filename=" + queryFileName + "&commitid=" + commitId;
         $.ajax({
             url: '/commit/historycontent' + "?" + param,//地址
             dataType: 'text',//数据类型

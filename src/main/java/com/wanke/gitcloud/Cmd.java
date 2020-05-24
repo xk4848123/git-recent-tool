@@ -1,9 +1,6 @@
 package com.wanke.gitcloud;
 
-import org.eclipse.jgit.api.AddCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -40,10 +37,10 @@ public class Cmd {
     private HashMap<String, Git> gitMap = new HashMap<String, Git>();
 
     public void initDirectory(String directory) {
-        gitInit(directory);
+        gitInit(directory,true);
     }
 
-    private Git gitInit(String directory) {
+    private Git gitInit(String directory,boolean force) {
         Git git = null;
         try {
             git = gitMap.get(directory);
@@ -53,7 +50,12 @@ public class Cmd {
                         if (new File(rootDirectory + directory + File.separator + ".git").exists()) {
                             git = Git.open(new File(rootDirectory + directory));
                         } else {
-                            git = Git.init().setDirectory(new File(rootDirectory + directory)).call();
+                            if (force){
+                                git = Git.init().setDirectory(new File(rootDirectory + directory)).call();
+                            }else {
+                                return  null;
+                            }
+
                         }
                         gitMap.put(directory, git);
                         return git;
@@ -70,7 +72,7 @@ public class Cmd {
         //提交git
         Git git = null;
         try {
-            git = gitInit(directory);
+            git = gitInit(directory,false);
             if (git == null) {
                 return false;
             }
@@ -101,12 +103,15 @@ public class Cmd {
     }
 
 
-    public List<Map<String, String>> getCommitLog(String directory) {
+    public List<Map<String, String>> getCommitLog(String directory,Integer maxCount,Integer skip) {
         Git git = null;
-        git = gitInit(directory);
+        git = gitInit(directory,false);
+        if (git == null){
+            return null;
+        }
         Iterable<RevCommit> iterable = null;
         try {
-            iterable = git.log().setMaxCount(20).call();
+            iterable = git.log().setMaxCount(maxCount).setSkip(skip).call();
         } catch (GitAPIException e) {
             return null;
         }
@@ -126,12 +131,15 @@ public class Cmd {
 
     }
 
-    public List<Map<String, String>> getCommitLog(String directory, String fileName) {
+    public List<Map<String, String>> getCommitLog(String directory, String fileName,Integer maxCount,Integer skip) {
         Git git = null;
-        git = gitInit(directory);
+        git = gitInit(directory,false);
+        if (git == null){
+            return  null;
+        }
         Iterable<RevCommit> iterable = null;
         try {
-            iterable = git.log().addPath(fileName).setMaxCount(20).call();
+            iterable = git.log().addPath(fileName).setMaxCount(maxCount).setSkip(skip).call();
         } catch (GitAPIException e) {
             return null;
         }
@@ -151,12 +159,16 @@ public class Cmd {
 
     }
 
-    public String gitDiffVsHead(String directory,String revision)  {
+    public String gitDiffVsHead(String directory, String revision) {
         StringBuilder result = new StringBuilder();
         ByteArrayOutputStream outputStream = null;
+        Repository repository = null;
         try {
-            Git git = gitInit(directory);
-            Repository repository = git.getRepository();
+            Git git = gitInit(directory,false);
+            if (git == null){
+             return  "";
+            }
+            repository = git.getRepository();
             Iterable<RevCommit> iterable = git.log().setMaxCount(1).call();
             RevCommit curRevCommit = null;
             for (RevCommit revCommit : iterable) {
@@ -172,33 +184,39 @@ public class Cmd {
             DiffFormatter diffFormatter = new DiffFormatter(outputStream);
             //设置比较器为忽略空白字符对比（Ignores all whitespace）
             diffFormatter.setDiffComparator(RawTextComparator.WS_IGNORE_ALL);
-            diffFormatter.setRepository(repository); // 这里为什么还要设置它
+            diffFormatter.setRepository(repository);
             for (DiffEntry diffEntry : diff) {
                 diffFormatter.format(diffEntry);
-                result.append(outputStream.toString("UTF-8"));
+                result.append(outputStream.toString());
                 outputStream.reset();
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             return "";
-        }finally {
+        } finally {
+            if (repository != null){
+                repository.close();
+            }
             try {
-                if (outputStream != null){
+                if (outputStream != null) {
                     outputStream.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println(result.toString());
-        return result.toString().replaceAll("\n","<br>");
+        return result.toString().replaceAll("\n", "<br>");
     }
 
-    public String gitDiffCustomize(String directory, String firstRevision,String secondRevision)  {
+    public String gitDiffCustomize(String directory, String firstRevision, String secondRevision) {
         StringBuilder result = new StringBuilder();
         ByteArrayOutputStream outputStream = null;
+        Repository repository = null;
         try {
-            Git git = gitInit(directory);
-            Repository repository = git.getRepository();
+            Git git = gitInit(directory,false);
+            if (git == null){
+                return  "";
+            }
+            repository = git.getRepository();
             RevWalk walk = new RevWalk(repository);
             ObjectId secondObjId = repository.resolve(secondRevision);
             ObjectId firstObjId = repository.resolve(firstRevision);
@@ -214,15 +232,18 @@ public class Cmd {
             diffFormatter.setRepository(repository); // 这里为什么还要设置它
             for (DiffEntry diffEntry : diff) {
                 diffFormatter.format(diffEntry);
-                result.append(outputStream.toString("UTF-8"));
+                result.append(outputStream.toString());
                 outputStream.reset();
 
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             return "";
-        }finally {
+        } finally {
+            if (repository != null){
+                repository.close();
+            }
             try {
-                if (outputStream != null){
+                if (outputStream != null) {
                     outputStream.close();
                 }
             } catch (IOException e) {
@@ -230,11 +251,8 @@ public class Cmd {
             }
         }
         System.out.println(result.toString());
-        return result.toString().replaceAll("\n","<br>");
+        return result.toString().replaceAll("\n", "<br>");
     }
-
-
-
 
 
     public static AbstractTreeIterator getAbstractTreeIterator(RevCommit commit, Repository repository) {
@@ -252,7 +270,10 @@ public class Cmd {
     }
 
     public String gitFileHistoryContent(String directory, String fileName, String revision) {
-        Git git = gitInit(directory);
+        Git git = gitInit(directory,false);
+        if (git == null){
+            return "";
+        }
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Repository repository = null;
         try {
@@ -265,7 +286,39 @@ public class Cmd {
             ObjectId blobId = treeWalk.getObjectId(0);
             ObjectLoader loader = repository.open(blobId);
             loader.copyTo(out);
-            return out.toString("UTF-8").replaceAll("\n","<br>");
+            return out.toString().replaceAll("\n", "<br>");
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (repository != null)
+                repository.close();
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    public ByteArrayOutputStream gitFileHistoryContentByte(String directory, String fileName, String revision) {
+        Git git = gitInit(directory,false);
+        if (git == null){
+            return null;
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Repository repository = null;
+        try {
+            repository = git.getRepository();
+            RevWalk walk = new RevWalk(repository);
+            ObjectId objId = repository.resolve(revision);
+            RevCommit revCommit = walk.parseCommit(objId);
+            RevTree revTree = revCommit.getTree();
+            TreeWalk treeWalk = TreeWalk.forPath(repository, fileName, revTree);
+            ObjectId blobId = treeWalk.getObjectId(0);
+            ObjectLoader loader = repository.open(blobId);
+            loader.copyTo(out);
+            return out;
         } catch (Exception e) {
             return null;
         } finally {
@@ -281,5 +334,24 @@ public class Cmd {
         }
     }
 
-
+    public boolean rollBackPreRevision(String directory, String revision){
+        Git git = gitInit(directory,false);
+        if (git == null){
+            return false;
+        }
+        Repository repository = null;
+        try {
+            repository = git.getRepository();
+            RevWalk walk = new RevWalk(repository);
+            ObjectId objId = repository.resolve(revision);
+            RevCommit revCommit = walk.parseCommit(objId);
+            String preVision = revCommit.getName();
+            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(preVision).call();
+            return true;
+        } catch (Exception e){
+            return false;
+        }finally {
+            repository.close();
+        }
+    }
 }

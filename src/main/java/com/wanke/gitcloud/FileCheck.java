@@ -40,7 +40,47 @@ public class FileCheck {
 
     }
 
+    /**
+     * 检查是否是文件
+     *
+     * @param directory
+     * @param filePath
+     */
+    public boolean isFile(String directory,String filePath) {
+        if (directory == null || "".equals(directory)){
+            return  false;
+        }
+        if (filePath == null || "".equals(filePath)){
+            return  false;
+        }
+        File file = new File(checkDirectory + File.separator + directory + File.separator + filePath);
+        if (file.exists() || file.isFile()){
+            return  true;
+        }
+        return false;
 
+    }
+
+    /**
+     * 检查是否是目录
+     *
+     * @param directory
+     * @param filePath
+     */
+    public boolean isDirectory(String directory,String folderPath) {
+        if (directory == null || "".equals(directory)){
+            return  false;
+        }
+        if (folderPath == null || "".equals(folderPath)){
+            return  false;
+        }
+        File file = new File(checkDirectory + File.separator + directory + File.separator + folderPath);
+        if (file.exists() || file.isFile()){
+            return  true;
+        }
+        return false;
+
+    }
 
 
 

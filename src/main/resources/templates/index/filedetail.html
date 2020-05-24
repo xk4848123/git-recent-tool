@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8"/>
     <title>gitcloud</title>
-    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+
     <style>
         .clear {
             clear: both
@@ -12,11 +12,17 @@
     </style>
 </head>
 <body>
-<h1 id="h" th:inlines="text">您目前在<span></span>仓库下</h1>
-
+<h1 id="h" th:inlines="text">您目前在<span style="color: red;"></span>仓库下</h1>
+<div  style="margin: 20px 0;">
+    <div id="folderback" title="返回上一级目录" style="float: left;margin-right: 25px;"><img height='50' width='50' src="img/prefolder.jpg"></div>
+<div id="githome" title="导航仓库根目录" style="float: left;margin-right: 25px;"><img height='50' width='50' src="img/githome.jpg"></div>
+<div id="basehome" title="导航根目录" onclick="goBaseHome()" style="float: left;"><img height='50' width='50' src="img/basehome.jpg"></div>
+    <div class='clear'></div></div>
+</div>
 <div style="margin-bottom:30px;">
-    <div id="header" style="color: red;">当前目录下有<span></span>个文件</div>
-    <div id="file"></div>
+    <div id="header">目录位置:<span></span></div>
+    <div id="middle" style="color: red;">有<span></span>个文件</div>
+    <div style="margin-top: 20px;" id="file"></div>
 
 </div>
 <button onclick="createFolder()">创建文件夹</button>
@@ -38,19 +44,34 @@
     <div id="logheader" style="color: red;">仓库提交历史</div>
 
 </div>
+
+<div id="loadmore"  style='text-decoration:underline;color:red;margin: 10px 10px;'>加载更多提交历史</div>
 <div style="margin:20px 0;" id="diff">
 
 
 </div>
 
 </body>
-
+<script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="js/route.js"></script>
 <script type="text/javascript">
     var commitIDs;
     var str;
     var finalQueryParam;
+    var page = 1;
+    var pageNum = 10;
+    var loadmoreFn;
     $(function () {
         init();
+        $('#folderback').on('click', function() {
+            goBack(str,finalQueryParam);
+        });
+        $('#githome').on('click', function() {
+            goGitHome(str);
+        });
+        $('#loadmore').on('click', loadmoreFn = function() {
+            getCommitLog(str,page,pageNum);
+        });
     });
 
     function init() {
@@ -66,40 +87,51 @@
         } else {
             finalQueryParam = param;
         }
+        $("#header span").html(getPath(finalQueryParam));
         $("#hiddenFolders").val(finalQueryParam);
         $("#h span").html(str);
         $.ajax({
             url: 'files/' + str + '?folders=' + finalQueryParam,//地址
             dataType: 'json',//数据类型
             type: 'GET',//类型
-            timeout: 2000,//超时
+            timeout: 10000,//超时
             //请求成功
             success: function (res) {
                 var div = $("#file");
                 var num = 0;
                 var img;
-                var filepart;
+                var filePart;
+                //待进入的目录
                 var curParam;
-                for (var i = 0; i < res.length; i++) {
-                    if (res[i].type == 'file') {
-                        num++;
-                        filepart = "<a style = 'text-decoration: underline ; color :blue;' href ='" + str + "/singlefile?folders=" + finalQueryParam + "&filename=" + res[i].fileName + "'>" + res[i].fileName + "</a>";
-                        img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
-                    } else {
-
-                        if (finalQueryParam == '') {
-                            curParam = res[i].fileName;
+                var deletePart;
+                var downloadPart = '';
+                var divIdCount = 0;
+                if ((res.length == 1 ) && (res[0].data == 'notroot')){
+                    goBaseHome();
+                }else {
+                    for (var i = 0; i < res.length; i++) {
+                        divIdCount ++;
+                        if (res[i].type == 'file') {
+                            num++;
+                            deletePart = "<img onclick='' style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
+                            filePart = "<a style = 'text-decoration: underline ; color :blue;' href ='" + str + "/singlefile?folders=" + finalQueryParam + "&filename=" + res[i].fileName + "'>" + res[i].fileName + "</a>";
+                            img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
                         } else {
-                            curParam = finalQueryParam + '*' + res[i].fileName;
-                        }
-                        filepart = "<a style = 'text-decoration: underline ; color :yellowgreen;' href ='" + str + "?folders=" + curParam + "'>" + res[i].fileName + "</a>";
-                        img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/directory.jpg'>";
-                    }
 
-                    div.append(img + "<div style='float: left;margin-right: 25px;'>" + filepart +
-                        "</div><div style='float: left'>最近修改时间:" + res[i].modifiedTime + " 大小:(" + res[i].size + ")" + "</div><div class='clear'></div>");
+                            if (finalQueryParam == '') {
+                                curParam = res[i].fileName;
+                            } else {
+                                curParam = finalQueryParam + '*' + res[i].fileName;
+                            }
+                            filePart = "<a style = 'text-decoration: underline ; color :yellowgreen;' href ='" + str + "?folders=" + curParam + "'>" + res[i].fileName + "</a>";
+                            img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/directory.jpg'>";
+                        }
+
+                        div.append("<div id='part_" + divIdCount + "'>" + img + "<div style='float: left;margin-right: 25px;'>" + filePart +
+                            "</div><div style='float: left;margin-right: 25px;'>最近修改时间:" + res[i].modifiedTime + " 大小:(" + res[i].size + ")" + "</div><div class='clear'></div></div>");
+                    }
+                    $("#middle span").html(num);
                 }
-                $("#header span").html(num);
 
             },
             //失败/超时
@@ -107,9 +139,8 @@
                 alert(msg);
             }
         });
-        getCommitLog(str);
+        getCommitLog(str,page,pageNum);
         $("#log").click(function (e) {
-            console.log(e);
             var content = e.target.innerHTML;
             var strs = new Array();
             strs = content.split(":");
@@ -157,6 +188,10 @@
             }
 
         });
+    }
+
+    function  delete(divId,) {
+
     }
 
     function getUrlParameter(name) {
@@ -241,10 +276,35 @@
 
     }
 
-
-    function getCommitLog(str) {
+    function rollback(that){
+        var msg = "您确定要回滚版本吗，一旦回滚将不可挽回";
+        if (confirm(msg)!=true){
+            return;  //你也可以在这里做其他的操作
+        }
+        var id = $(that).prev().attr('id');
         $.ajax({
-            url: 'commit/commits?directory=' + str,//地址
+            url: 'reset/' + str,//地址
+            dataType: 'text',//数据类型
+            data: 'revision=' + id,
+            contentType: 'application/x-www-form-urlencoded',
+            type: 'POST',//类型
+            timeout: 5000,//超时
+            //请求成功
+            success: function (res) {
+               if (res == 'success'){
+                   goGitHome(str);
+               }
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
+
+    }
+    function getCommitLog(str,curPage,curPageNum) {
+        $.ajax({
+            url: 'commit/commits?directory=' + str + "&page=" + curPage + "&pagenum=" + curPageNum,//地址
             dataType: 'json',//数据类型
             type: 'GET',//类型
             timeout: 2000,//超时
@@ -252,11 +312,26 @@
             success: function (res) {
                 var div = $("#log");
                 for (var i = 0; i < res.length; i++) {
-                    div.append("<div style='margin:10px 5px;'>" +
-                        "<div title='点击可作比对' style='text-decoration:underline;color:blue;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
-                        "<div>time:" + res[i].time + "</div></div>");
-                }
+                    if(curPage == 1 && i == 0){
+                        div.append("<div style='margin:10px 5px;'>" +
+                            "<div title='点击可作比对' style='text-decoration:underline;color:blue;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
+                            "<div>time:" + res[i].time + "</div></div>");
+                    }else {
+                        div.append("<div style='margin:10px 5px;'>" +
+                            "<div><div title='点击可作比对' style='text-decoration:underline;color:blue;float: left;margin-right: 25px;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
+                            "<div title='回退到此版本' onclick='rollback(this)'><img height='21' width='30' src='img/rollback.jpg'></div><div class='clear'></div></div>" +
+                            "<div>time:" + res[i].time + "</div></div>");
+                    }
 
+                }
+                if (res.length == 0){
+                    var loadDiv = $("#loadmore");
+                    loadDiv.html("没有更多提交历史了");
+                    loadDiv.unbind("click",loadmoreFn);
+                    loadDiv.css("color","");
+                }else {
+                    page++;
+                }
             },
             //失败/超时
             error: function (msg) {
@@ -285,5 +360,4 @@
 
     }
 </script>
-
 </html>

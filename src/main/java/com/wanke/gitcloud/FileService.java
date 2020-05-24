@@ -51,6 +51,9 @@ public class FileService {
         File dir = new File(path);
         List<Map<String,String>> filesList = new ArrayList<>();
         if (!dir.exists() || !dir.isDirectory()) {// 判断是否存在目录
+            HashMap<String,String> map = new HashMap<>();
+            map.put("data","notroot");
+            filesList.add(map);
             return filesList;
         }
         String[] files = dir.list();
@@ -145,6 +148,26 @@ public class FileService {
 
         return path;
 
+    }
+
+    public boolean deleteFile(String path){
+        boolean success = (new File(path)).delete();
+        return  success;
+    }
+
+    public  boolean deleteDir(File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+               //递归删除目录中的子目录下
+            for (int i=0; i<children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        // 目录此时为空，可以删除
+        return dir.delete();
     }
 
 }
