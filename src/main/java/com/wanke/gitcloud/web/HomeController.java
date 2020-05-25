@@ -34,6 +34,9 @@ public class HomeController {
     , @RequestParam(value = "filename") String fileName, Model model, RedirectAttributes attr)
     {
         String path = fileService.getPath(directory, folders, fileName,File.separator);
+        if (path == null){
+            return  "redirect:/";
+        }
         File file = new File(path);
         if (file.exists()){
             model.addAttribute("directory",directory);

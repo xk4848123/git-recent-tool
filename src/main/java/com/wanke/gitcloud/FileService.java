@@ -117,6 +117,12 @@ public class FileService {
                 path = path + spliFlag + folder;
             }
         }
+        //安全检查目录存在于否
+        if (spliFlag.equals(File.separator)){
+            if (! new File(path).exists()){
+               return null;
+            }
+        }
         if (fileName != null){
             return path + spliFlag + fileName;
         }

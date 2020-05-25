@@ -6,10 +6,7 @@ import com.wanke.gitcloud.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 
@@ -29,12 +26,16 @@ public class FileClearController {
     @Autowired
     private Cmd cmd;
 
-    @RequestMapping(value = "file/{directory}/{folders}", method = RequestMethod.GET, produces = "text/plain;charset=UTF-8")
-    public String deleteFile(@PathVariable("directory") String directory, @PathVariable("folders") String filePath,
+    @RequestMapping(value = "file/{directory}", method = RequestMethod.POST, produces = "text/plain;charset=UTF-8")
+    @ResponseBody
+    public String deleteFile(@PathVariable("directory") String directory, @RequestParam(value = "folders",required = false,defaultValue = "") String folders,
                              @RequestParam("file") String file) {
-
-        if (fileCheck.isFile(directory, filePath)) {
-            if (fileService.deleteFile(rootDirectory + File.separator + directory + File.separator + filePath)) {
+        String path = fileService.getPath(directory, folders, file, File.separator);
+        if (path == null){
+            return "fail";
+        }
+        if (fileCheck.isFile(path)) {
+            if (fileService.deleteFile(path)) {
                 cmd.gitCommit(directory);
                 return "true";
             }
@@ -42,10 +43,15 @@ public class FileClearController {
         return "fail";
     }
 
-    @RequestMapping(value = "dir/{directory}/{folders}", method = RequestMethod.GET, produces = "text/plain;charset=UTF-8")
-    public String deleteFolder(@PathVariable("directory") String directory, @PathVariable("folders") String folders) {
-        if (fileCheck.isDirectory(directory, folders)) {
-            boolean isSuccess = fileService.deleteDir(new File(rootDirectory + File.separator + directory + File.separator + folders));
+    @RequestMapping(value = "dir/{directory}", method = RequestMethod.POST, produces = "text/plain;charset=UTF-8")
+    @ResponseBody
+    public String deleteFolder(@PathVariable("directory") String directory, @RequestParam("folders") String folders) {
+        String path = fileService.getPath(directory, folders, null, File.separator);
+        if (path == null){
+            return "fail";
+        }
+        if (fileCheck.isDirectory(path)) {
+            boolean isSuccess = fileService.deleteDir(new File(path));
             cmd.gitCommit(directory);
             if (isSuccess){
                 return "true";

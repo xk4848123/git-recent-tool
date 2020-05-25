@@ -13,11 +13,15 @@
 </head>
 <body>
 <h1 id="h" th:inlines="text">您目前在<span style="color: red;"></span>仓库下</h1>
-<div  style="margin: 20px 0;">
-    <div id="folderback" title="返回上一级目录" style="float: left;margin-right: 25px;"><img height='50' width='50' src="img/prefolder.jpg"></div>
-<div id="githome" title="导航仓库根目录" style="float: left;margin-right: 25px;"><img height='50' width='50' src="img/githome.jpg"></div>
-<div id="basehome" title="导航根目录" onclick="goBaseHome()" style="float: left;"><img height='50' width='50' src="img/basehome.jpg"></div>
-    <div class='clear'></div></div>
+<div style="margin: 20px 0;">
+    <div id="folderback" title="返回上一级目录" style="float: left;margin-right: 25px;"><img height='50' width='50'
+                                                                                      src="img/prefolder.jpg"></div>
+    <div id="githome" title="导航仓库根目录" style="float: left;margin-right: 25px;"><img height='50' width='50'
+                                                                                   src="img/githome.jpg"></div>
+    <div id="basehome" title="导航根目录" onclick="goBaseHome()" style="float: left;"><img height='50' width='65'
+                                                                                      src="img/basehome.jpg"></div>
+    <div class='clear'></div>
+</div>
 </div>
 <div style="margin-bottom:30px;">
     <div id="header">目录位置:<span></span></div>
@@ -30,14 +34,15 @@
     <input id="hiddenDirectory" type="hidden" name="directory"/>
     <input id="hiddenFolders" type="hidden" name="folders"/>
     <div id="uploadfile">
-    <p>选择文件: <input type="file" name="fileName"/></p>
+        <p>选择文件: <input type="file" name="fileName"/></p>
         <p>选择文件: <input type="file" name="fileName"/></p>
     </div>
     <div>
-    <div style="float: left;margin-right: 25px;"><input type="submit" value="上传"/></div>
-        <div style="float: left;margin-right: 25px;" onclick="add()"><img height='20' width='20' src="img/add.jpg"></div>
+        <div style="float: left;margin-right: 25px;"><input type="submit" value="上传"/></div>
+        <div style="float: left;margin-right: 25px;" onclick="add()"><img height='20' width='20' src="img/add.jpg">
+        </div>
         <div style="float: left;" onclick="sub()"><img height='20' width='20' src="img/sub.jpg"></div>
-    <div class='clear'></div>
+        <div class='clear'></div>
     </div>
 </form>
 <div id="log">
@@ -45,7 +50,7 @@
 
 </div>
 
-<div id="loadmore"  style='text-decoration:underline;color:red;margin: 10px 10px;'>加载更多提交历史</div>
+<div id="loadmore" style='text-decoration:underline;color:red;margin: 10px 10px;'>加载更多提交历史</div>
 <div style="margin:20px 0;" id="diff">
 
 
@@ -63,14 +68,14 @@
     var loadmoreFn;
     $(function () {
         init();
-        $('#folderback').on('click', function() {
-            goBack(str,finalQueryParam);
+        $('#folderback').on('click', function () {
+            goBack(str, finalQueryParam);
         });
-        $('#githome').on('click', function() {
+        $('#githome').on('click', function () {
             goGitHome(str);
         });
-        $('#loadmore').on('click', loadmoreFn = function() {
-            getCommitLog(str,page,pageNum);
+        $('#loadmore').on('click', loadmoreFn = function () {
+            getCommitLog(str, page, pageNum);
         });
     });
 
@@ -80,6 +85,7 @@
         var index = url.lastIndexOf("\/");
         str = url.substring(index + 1, url.length);
         str = str.split("?")[0];
+        str = decodeURI(str);
         $("#hiddenDirectory").val(str);
         var param = decodeURI(getUrlParameter('folders'));
         if (param == null || param == '') {
@@ -106,29 +112,32 @@
                 var deletePart;
                 var downloadPart = '';
                 var divIdCount = 0;
-                if ((res.length == 1 ) && (res[0].data == 'notroot')){
+                if ((res.length == 1) && (res[0].data == 'notroot')) {
                     goBaseHome();
-                }else {
+                } else {
                     for (var i = 0; i < res.length; i++) {
-                        divIdCount ++;
+                        divIdCount++;
+                        var divId = "part_" + divIdCount;
                         if (res[i].type == 'file') {
                             num++;
-                            deletePart = "<img onclick='' style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
+                            downloadPart = "<img onclick='downloadFile(\"" + res[i].fileName + "\")' style='float: left;margin-right: 10px;' height='20' width='20' src='/img/download.jpg'>";
+                            deletePart = "<img onclick='deleteFile(\"" + res[i].fileName + "\",\"" + divId + "\")' style='float: left;margin-right: 25px;' height='20' width='20' src='/img/delete.jpg'>";
                             filePart = "<a style = 'text-decoration: underline ; color :blue;' href ='" + str + "/singlefile?folders=" + finalQueryParam + "&filename=" + res[i].fileName + "'>" + res[i].fileName + "</a>";
                             img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/file.jpg'>";
                         } else {
-
                             if (finalQueryParam == '') {
                                 curParam = res[i].fileName;
                             } else {
                                 curParam = finalQueryParam + '*' + res[i].fileName;
                             }
+                            downloadPart = '';
+                            deletePart = "<img onclick='deleteDir(\"" + curParam + "\",\"" + divId + "\")' style='float: left;margin-right: 25px;' height='20' width='20' src='/img/delete.jpg'>";
                             filePart = "<a style = 'text-decoration: underline ; color :yellowgreen;' href ='" + str + "?folders=" + curParam + "'>" + res[i].fileName + "</a>";
                             img = "<img style='float: left;margin-right: 25px;' height='20' width='20' src='img/directory.jpg'>";
                         }
 
-                        div.append("<div id='part_" + divIdCount + "'>" + img + "<div style='float: left;margin-right: 25px;'>" + filePart +
-                            "</div><div style='float: left;margin-right: 25px;'>最近修改时间:" + res[i].modifiedTime + " 大小:(" + res[i].size + ")" + "</div><div class='clear'></div></div>");
+                        div.append("<div id='" + divId + "'>" + img + "<div style='float: left;margin-right: 25px;'>" + filePart +
+                            "</div><div style='float: left;margin-right: 25px;'>最近修改时间:" + res[i].modifiedTime + " 大小:(" + res[i].size + ")</div>" + downloadPart + deletePart + "<div class='clear'></div></div>");
                     }
                     $("#middle span").html(num);
                 }
@@ -139,7 +148,7 @@
                 alert(msg);
             }
         });
-        getCommitLog(str,page,pageNum);
+        getCommitLog(str, page, pageNum);
         $("#log").click(function (e) {
             var content = e.target.innerHTML;
             var strs = new Array();
@@ -190,8 +199,64 @@
         });
     }
 
-    function  delete(divId,) {
+    function deleteDir(dir, divId) {
+        var msg = "您确定删除 " + getPath(dir) + " 目录吗？";
+        if (confirm(msg) != true) {
+            return;  //你也可以在这里做其他的操作
+        }
+        $.ajax({
+            url: 'clear/dir/' + str,//地址
+            dataType: 'text',//数据类型
+            data: 'folders=' + dir,
+            contentType: 'application/x-www-form-urlencoded',
+            type: 'POST',//类型
+            timeout: 20000,//超时
+            //请求成功
+            success: function (res) {
+                if (res == 'true') {
+                    $("#" + divId).remove();
+                }
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
+    }
 
+    function downloadFile(fileName) {
+        window.open("/newfile/downloadFile?directory=" + str + "&filename=" + fileName + "&commitid=head" + "&folders=" +finalQueryParam);
+    }
+
+    function deleteFile(fileName, divId) {
+        var msg = "您确定删除 " + fileName + " 文件吗？";
+        if (confirm(msg) != true) {
+            return;  //你也可以在这里做其他的操作
+        }
+        var param;
+        if (finalQueryParam == '') {
+            param = 'file=' + fileName;
+        } else {
+            param = 'file=' + fileName + '&folders=' + finalQueryParam;
+        }
+        $.ajax({
+            url: 'clear/file/' + str,//地址
+            dataType: 'text',//数据类型
+            data: param,
+            contentType: 'application/x-www-form-urlencoded',
+            type: 'POST',//类型
+            timeout: 20000,//超时
+            //请求成功
+            success: function (res) {
+                if (res == 'true') {
+                    $("#" + divId).remove();
+                }
+            },
+            //失败/超时
+            error: function (msg) {
+                alert(msg);
+            }
+        });
     }
 
     function getUrlParameter(name) {
@@ -230,17 +295,17 @@
         }
     }
 
-    function add(){
+    function add() {
         var length = $("#uploadfile").children('p').length;
-        if (length < 5){
+        if (length < 5) {
             $("#uploadfile").append("<p>选择文件: <input type='file' name='fileName'></p>");
         }
 
     }
 
-    function sub(){
+    function sub() {
         var length = $("#uploadfile").children('p').length;
-        if (length > 1){
+        if (length > 1) {
             $("#uploadfile").children().last().remove();
         }
 
@@ -276,9 +341,9 @@
 
     }
 
-    function rollback(that){
+    function rollback(that) {
         var msg = "您确定要回滚版本吗，一旦回滚将不可挽回";
-        if (confirm(msg)!=true){
+        if (confirm(msg) != true) {
             return;  //你也可以在这里做其他的操作
         }
         var id = $(that).prev().attr('id');
@@ -291,9 +356,9 @@
             timeout: 5000,//超时
             //请求成功
             success: function (res) {
-               if (res == 'success'){
-                   goGitHome(str);
-               }
+                if (res == 'success') {
+                    goGitHome(str);
+                }
             },
             //失败/超时
             error: function (msg) {
@@ -302,7 +367,8 @@
         });
 
     }
-    function getCommitLog(str,curPage,curPageNum) {
+
+    function getCommitLog(str, curPage, curPageNum) {
         $.ajax({
             url: 'commit/commits?directory=' + str + "&page=" + curPage + "&pagenum=" + curPageNum,//地址
             dataType: 'json',//数据类型
@@ -312,11 +378,11 @@
             success: function (res) {
                 var div = $("#log");
                 for (var i = 0; i < res.length; i++) {
-                    if(curPage == 1 && i == 0){
+                    if (curPage == 1 && i == 0) {
                         div.append("<div style='margin:10px 5px;'>" +
                             "<div title='点击可作比对' style='text-decoration:underline;color:blue;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
                             "<div>time:" + res[i].time + "</div></div>");
-                    }else {
+                    } else {
                         div.append("<div style='margin:10px 5px;'>" +
                             "<div><div title='点击可作比对' style='text-decoration:underline;color:blue;float: left;margin-right: 25px;' id ='" + res[i].commitID + "'>CommitID:" + res[i].commitID + "</div>" +
                             "<div title='回退到此版本' onclick='rollback(this)'><img height='21' width='30' src='img/rollback.jpg'></div><div class='clear'></div></div>" +
@@ -324,12 +390,12 @@
                     }
 
                 }
-                if (res.length == 0){
+                if (res.length == 0) {
                     var loadDiv = $("#loadmore");
                     loadDiv.html("没有更多提交历史了");
-                    loadDiv.unbind("click",loadmoreFn);
-                    loadDiv.css("color","");
-                }else {
+                    loadDiv.unbind("click", loadmoreFn);
+                    loadDiv.css("color", "");
+                } else {
                     page++;
                 }
             },
@@ -338,21 +404,22 @@
             }
         });
     }
-    function check(){
+
+    function check() {
         var flag = false;
-        $("#uploadfile p input").each(function(){
+        $("#uploadfile p input").each(function () {
 
-            var self=$(this);
+            var self = $(this);
             var the_file = self.val();
-            if(the_file == "" || the_file.length == 0){
+            if (the_file == "" || the_file.length == 0) {
 
-            }else{
+            } else {
                 flag = true;
             }
         });
-        if(flag){
+        if (flag) {
             return true;
-        }else {
+        } else {
             alert("请选择文件");
             return false;
         }

@@ -43,17 +43,10 @@ public class FileCheck {
     /**
      * 检查是否是文件
      *
-     * @param directory
      * @param filePath
      */
-    public boolean isFile(String directory,String filePath) {
-        if (directory == null || "".equals(directory)){
-            return  false;
-        }
-        if (filePath == null || "".equals(filePath)){
-            return  false;
-        }
-        File file = new File(checkDirectory + File.separator + directory + File.separator + filePath);
+    public boolean isFile(String filePath) {
+        File file = new File(filePath);
         if (file.exists() || file.isFile()){
             return  true;
         }
@@ -64,17 +57,11 @@ public class FileCheck {
     /**
      * 检查是否是目录
      *
-     * @param directory
-     * @param filePath
+     * @param path
+     *
      */
-    public boolean isDirectory(String directory,String folderPath) {
-        if (directory == null || "".equals(directory)){
-            return  false;
-        }
-        if (folderPath == null || "".equals(folderPath)){
-            return  false;
-        }
-        File file = new File(checkDirectory + File.separator + directory + File.separator + folderPath);
+    public boolean isDirectory(String path) {
+        File file = new File(path);
         if (file.exists() || file.isFile()){
             return  true;
         }

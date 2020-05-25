@@ -70,6 +70,9 @@ public class FileNewController {
             return "false";
         }
         String path = fileService.getPath(directory, folders, null, File.separator);
+        if (path == null){
+            return "false";
+        }
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
             int size = (int) file.getSize();
@@ -93,7 +96,7 @@ public class FileNewController {
         }
         cmd.gitCommit(directory);
         attr.addAttribute("folders",folders);
-        String redirectUrl = "/" + directory;
+        String redirectUrl = "/" + URLEncoder.encode(directory);;
         return "redirect:" + redirectUrl;
 
     }
@@ -107,6 +110,7 @@ public class FileNewController {
             directory = "default";
         }
         String[] folderValues = request.getParameterValues("folders");
+
         String folders = folderValues[0];
         String[] filenameValues = request.getParameterValues("filename");
         String fileName = filenameValues[0];
@@ -123,6 +127,9 @@ public class FileNewController {
 
                 //下载最新的本地文件即可
                 String path = fileService.getPath(directory, folders, fileName, File.separator);
+                if (path == null){
+                    return;
+                }
                 File file = new File(path);
                 if (!file.exists()) {
                     return;
@@ -164,4 +171,5 @@ public class FileNewController {
         }
         return;
     }
+
 }
