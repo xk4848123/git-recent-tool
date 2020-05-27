@@ -20,12 +20,12 @@ public class HomeController {
 
     @RequestMapping(value = "",method= RequestMethod.GET)
     public String file(){
-        return "/index/index";
+        return "index/index";
     }
 
     @RequestMapping(value = "{directory}",method= RequestMethod.GET)
     public String fileDetail(@PathVariable("directory") String directory){
-        return "/index/filedetail";
+        return "index/filedetail";
     }
 
     @RequestMapping(value = "{directory}/singlefile",method= RequestMethod.GET)
@@ -43,7 +43,7 @@ public class HomeController {
             model.addAttribute("folders",folders);
             model.addAttribute("filename",fileName);
             model.addAttribute("filefullname",fileName+ "(" + String.valueOf(file.length()) + "B)");
-            return "/index/singlefile";
+            return "index/singlefile";
         }
         //重定向到原目录
         attr.addAttribute("folders",folders);
