@@ -2,6 +2,9 @@ package com.wanke.gitcloud.web;
 
 import com.wanke.gitcloud.Cmd;
 import com.wanke.gitcloud.FileService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Controller
+@Api(value = "新建仓库目录、下载", tags = {"用于新建仓库目录、下载"})
 @RequestMapping(value = "newfile")
 public class FileNewController {
 
@@ -31,6 +35,7 @@ public class FileNewController {
     @Value("${my.rootDirectory}")
     private String rootDirectory;
 
+    @ApiOperation(value = "新建仓库", notes = "新建仓库", httpMethod = "POST")
     @RequestMapping(value = "newgit", method = RequestMethod.POST)
     @ResponseBody
     public String newGit(@RequestParam(value = "directory") String directory) {
@@ -38,10 +43,11 @@ public class FileNewController {
         return "success";
     }
 
+    @ApiOperation(value = "新建仓库下目录", notes = "新建仓库下目录", httpMethod = "POST")
     @RequestMapping(value = "createfolder/{directory}", method = RequestMethod.POST)
     @ResponseBody
-    public String newFolder(@PathVariable("directory") String directory,
-                            @RequestParam(value = "folders", required = false, defaultValue = "") String folders,
+    public String newFolder(@PathVariable("directory") String directory,@ApiParam(value = "当前目录", required = false,example = "default*default")
+    @RequestParam(value = "folders", required = false, defaultValue = "") String folders,@ApiParam(value = "要创建的目录名", required = false,example = "default")
                             @RequestParam("foldername") String folderName) {
         if (fileService.createFolder(directory, folders, folderName)) {
             return "success";
@@ -53,6 +59,7 @@ public class FileNewController {
     /**
      * 实现多文件上传
      */
+    @ApiOperation(value = "多文件上传", notes = "多文件上传", httpMethod = "POST")
     @RequestMapping(value = "multifileUpload", method = RequestMethod.POST)
     public String multifileUpload(HttpServletRequest request, RedirectAttributes attr) {
         Map<String, String[]> map = request.getParameterMap();
@@ -65,13 +72,15 @@ public class FileNewController {
         String[] folderValues = request.getParameterValues("folders");
         String folders = folderValues[0];
 
+        attr.addAttribute("folders",folders);
+        String redirectUrl = "/" + URLEncoder.encode(directory);;
         List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("fileName");
         if (files.isEmpty()) {
-            return "false";
+            return "redirect:" + redirectUrl;
         }
         String path = fileService.getPath(directory, folders, null, File.separator);
         if (path == null){
-            return "false";
+            return "redirect:" + redirectUrl;
         }
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
@@ -95,12 +104,10 @@ public class FileNewController {
             }
         }
         cmd.gitCommit(directory);
-        attr.addAttribute("folders",folders);
-        String redirectUrl = "/" + URLEncoder.encode(directory);;
         return "redirect:" + redirectUrl;
-
     }
 
+    @ApiOperation(value = "文件下载", notes = "文件下载", httpMethod = "GET")
     @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
     private void downloadFile(HttpServletResponse response, HttpServletRequest request) {
         //获取仓库

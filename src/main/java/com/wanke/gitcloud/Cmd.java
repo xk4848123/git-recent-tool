@@ -286,6 +286,9 @@ public class Cmd {
             ObjectId blobId = treeWalk.getObjectId(0);
             ObjectLoader loader = repository.open(blobId);
             loader.copyTo(out);
+            if (out.size()>500 * 1024){
+                return "文件大于500KB，请直接下载";
+            }
             return out.toString().replaceAll("\n", "<br>");
         } catch (Exception e) {
             return null;

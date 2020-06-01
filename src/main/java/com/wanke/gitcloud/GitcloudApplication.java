@@ -3,6 +3,7 @@ package com.wanke.gitcloud;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
 public class GitcloudApplication {
@@ -14,8 +15,6 @@ public class GitcloudApplication {
             System.out.println("application.properties的my.rootDirectory属性请设置一个空目录或者曾经用于该存储系统的目录");
             System.exit(0);
         }
-//        Cmd cmd = applicationContext.getBean(Cmd.class);
-//        System.out.println(cmd.getCommitLog("hello"));
 
     }
 
