@@ -111,18 +111,13 @@ public class FileNewController {
     @RequestMapping(value = "/downloadFile", method = RequestMethod.GET)
     private void downloadFile(HttpServletResponse response, HttpServletRequest request) {
         //获取仓库
-        String[] values = request.getParameterValues("directory");
-        String directory = values[0];
+        String directory = request.getParameter("directory");
         if (directory == null || "".equals(directory)) {
             directory = "default";
         }
-        String[] folderValues = request.getParameterValues("folders");
-
-        String folders = folderValues[0];
-        String[] filenameValues = request.getParameterValues("filename");
-        String fileName = filenameValues[0];
-        String[] commitIdValues = request.getParameterValues("commitid");
-        String commitId = commitIdValues[0];
+        String folders = request.getParameter("folders");
+        String fileName= request.getParameter("filename");
+        String commitId = request.getParameter("commitid");
         OutputStream outputStream = null;
         FileInputStream fis = null;
         BufferedInputStream bis = null;

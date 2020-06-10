@@ -225,6 +225,7 @@
     }
 
     function downloadFile(fileName) {
+        console.log("/newfile/downloadFile?directory=" + str + "&filename=" + fileName + "&commitid=head" + "&folders=" +finalQueryParam);
         window.open("/newfile/downloadFile?directory=" + str + "&filename=" + fileName + "&commitid=head" + "&folders=" +finalQueryParam);
     }
 
