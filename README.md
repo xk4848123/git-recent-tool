@@ -1,11 +1,11 @@
 # git-recent-tool
 ===========================
 
-###########环境依赖
+## 环境依赖
 jdk8+
 maven3.5.4+
 
-###########部署步骤
+## 部署步骤
 1. 配置git对应本地根目录
     application.properties中my.rootDirectory
     如:windows:my.rootDirectory=E:\\git_002\\
@@ -17,7 +17,7 @@ maven3.5.4+
 3. java -jar xxx.jar
 
 
-###########目录结构描述
+## 目录结构描述
 ├── Readme.md                      // help
 ├── src/main/java
      └── com.wanke.gitcloud
